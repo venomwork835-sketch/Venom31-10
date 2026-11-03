@@ -186,7 +186,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem(`${LOCAL_STORAGE_KEY}_products`);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed: Product[] = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const savedIds = new Set(parsed.map(p => p.id));
+          const missingInitial = INITIAL_PRODUCTS.filter(p => !savedIds.has(p.id));
+          if (missingInitial.length > 0) {
+            const merged = [...parsed, ...missingInitial];
+            localStorage.setItem(`${LOCAL_STORAGE_KEY}_products`, JSON.stringify(merged));
+            return merged;
+          }
+          return parsed;
+        }
       } catch (e) {
         console.error(e);
       }

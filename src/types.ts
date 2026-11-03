@@ -147,12 +147,12 @@ export const SELLER_PLANS: SellerPlan[] = [
     level: 8,
     name: 'Plan 8 - Full Store (Master Wholesale)',
     price: 25000,
-    productCount: 58,
+    productCount: 110,
     profitPercentage: 40,
     dailyEarningsEstimate: 10000,
     badge: 'Full Store',
-    description: 'Complete wholesale store access with all 58 catalog products unlocked and highest 40% profit tier.',
-    features: ['Full Store - All 58 Catalog Products', '40% Maximum Profit Yield', 'VIP Instant Buy-Back Desk', 'Zero-Fee Wire Clearances'],
+    description: 'Complete wholesale store access with all 110 catalog products unlocked across tech, apparel, fragrances, and dresses with highest 40% profit tier.',
+    features: ['Full Store - All 110 Catalog Products', '40% Maximum Profit Yield', 'VIP Instant Buy-Back Desk', 'Zero-Fee Wire Clearances'],
   },
 ];
 
@@ -165,7 +165,9 @@ export type ProductCategory =
   | 'wearables'
   | 'accessories'
   | 'footwear'
-  | 'apparel';
+  | 'apparel'
+  | 'perfumes'
+  | 'dresses';
 
 export interface Product {
   id: string;

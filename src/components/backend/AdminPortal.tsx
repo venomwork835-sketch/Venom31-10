@@ -1428,7 +1428,7 @@ export const AdminPortal: React.FC = () => {
                     Merchant Store Level & Plans Manager (Plan 1 to Plan 8 - Full Store)
                   </h2>
                   <p className="text-xs text-slate-400 mt-1">
-                    Select any member from the platform to assign their merchant plan. Updating their level automatically populates the exact corresponding number of products (4, 8, 15, 22, 30, 40, 50, or all 58 Full Store) into their store!
+                    Select any member from the platform to assign their merchant plan. Updating their level automatically populates the exact corresponding number of products (4, 8, 15, 22, 30, 40, 50, or all 110 Full Store) into their store!
                   </p>
                 </div>
 
@@ -1969,9 +1969,12 @@ export const AdminPortal: React.FC = () => {
                           <option value="mobiles">Smartphones & Mobiles</option>
                           <option value="laptops">Laptops & Workstations</option>
                           <option value="electronics">Electronics & Tech</option>
+                          <option value="apparel">T-Shirts, Sweaters, Pants & Jackets (Apparel)</option>
+                          <option value="dresses">Ladies' Short Dresses</option>
+                          <option value="perfumes">Luxury Perfumes & Scents</option>
                           <option value="audio">Audio & Headphones</option>
                           <option value="wearables">Smart Wearables & Watches</option>
-                          <option value="apparel">Winter Apparel & Jackets</option>
+                          <option value="accessories">Fashion Accessories & Travel Gear</option>
                           <option value="footwear">Footwear & Shoes</option>
                         </select>
                       </div>

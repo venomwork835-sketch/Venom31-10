@@ -47,13 +47,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const categories: { label: string; value: ProductCategory }[] = [
     { label: 'All Catalog', value: 'all' },
+    { label: 'T-Shirts, Sweaters & Pants', value: 'apparel' },
+    { label: "Ladies' Dresses", value: 'dresses' },
+    { label: 'Luxury Perfumes', value: 'perfumes' },
     { label: 'Smartphones', value: 'mobiles' },
     { label: 'Laptops', value: 'laptops' },
     { label: 'Projectors & Electronics', value: 'electronics' },
     { label: 'Audio, Speakers & Earbuds', value: 'audio' },
     { label: 'Wearables', value: 'wearables' },
-    { label: 'Fast Chargers & Gear', value: 'accessories' },
-    { label: 'Winter Apparel & Jackets', value: 'apparel' },
+    { label: 'Accessories & Travel', value: 'accessories' },
     { label: 'Footwear & Shoes', value: 'footwear' },
   ];
 

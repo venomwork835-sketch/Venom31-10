@@ -98,12 +98,14 @@ export const HomeTab: React.FC<HomeTabProps> = ({
 
   const categories: { key: ProductCategory; label: string }[] = [
     { key: 'all', label: `All Products (${products.length})` },
+    { key: 'apparel', label: 'T-Shirts, Sweaters & Pants' },
+    { key: 'dresses', label: "Ladies' Short Dresses" },
+    { key: 'perfumes', label: 'Luxury Perfumes' },
     { key: 'mobiles', label: 'Smartphones' },
     { key: 'laptops', label: 'Laptops' },
     { key: 'electronics', label: 'Projectors & Tech' },
     { key: 'audio', label: 'Speakers & Earbuds' },
-    { key: 'accessories', label: 'Fast Chargers' },
-    { key: 'apparel', label: 'Winter Apparel & Jackets' },
+    { key: 'accessories', label: 'Accessories & Travel' },
     { key: 'footwear', label: 'Shoes & Footwear' },
     { key: 'wearables', label: 'Wearables' },
   ];
@@ -185,12 +187,12 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white leading-tight">
             ⚡ FLASH 20% OFF SALE
             <span className="block text-2xl md:text-3xl font-extrabold text-amber-400 mt-1">
-              Live Tech, Phones, Laptops & Wholesale Catalog
+              Tech, T-Shirts, Sweaters, Jackets, Perfumes & Dresses
             </span>
           </h1>
 
           <p className="text-slate-300 text-sm md:text-base leading-relaxed max-w-2xl">
-            All 58 wholesale catalog products are currently running on direct 20% flash discounts. Purchase with account balance or direct bank wire. Once admin executes buy back, total amount + your guaranteed net profit is credited instantly!
+            All {products.length} wholesale catalog products are currently running on direct 20% flash discounts. Purchase with account balance or direct bank wire. Once admin executes buy back, total amount + your guaranteed net profit is credited instantly!
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-4">
