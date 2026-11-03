@@ -17,9 +17,6 @@ import {
   Phone,
   Calendar,
   Sparkles,
-  Copy,
-  Check,
-  Share2,
   Crown,
   Package,
   Zap,
@@ -35,17 +32,8 @@ export const ProfileTab: React.FC = () => {
     setIsAuthModalOpen,
     unreadNotificationCount,
     unreadChatCount,
-    setViewMode,
     setIsPlansModalOpen,
   } = useApp();
-
-  const [copiedReferral, setCopiedReferral] = React.useState(false);
-
-  const handleCopyCode = () => {
-    navigator.clipboard?.writeText(currentUser.referralCode || 'REF-EBUY99');
-    setCopiedReferral(true);
-    setTimeout(() => setCopiedReferral(false), 2000);
-  };
 
   // Helper for credit score color
   const getCreditScoreColor = (score: number) => {
@@ -173,46 +161,6 @@ export const ProfileTab: React.FC = () => {
               ></div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Referral / Invitation Code Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 rounded-2xl border border-amber-300/60 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
-            <Share2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-900">My Referral / Invitation Code</span>
-              {currentUser.referredBy && (
-                <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                  Referred by: <strong className="text-amber-700">{currentUser.referredBy}</strong>
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-slate-600">Share your referral code to invite members to E-seller</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="bg-white border border-amber-300 px-3 py-1.5 rounded-xl font-mono text-xs font-black text-slate-900 tracking-wider shadow-inner">
-            {currentUser.referralCode || 'REF-ESELLER99'}
-          </div>
-          <button
-            onClick={handleCopyCode}
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1 shadow-sm"
-          >
-            {copiedReferral ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-slate-950" /> Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" /> Copy Code
-              </>
-            )}
-          </button>
         </div>
       </div>
 
@@ -370,22 +318,6 @@ export const ProfileTab: React.FC = () => {
             </span>
             <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
           </div>
-        </button>
-      </div>
-
-      {/* Admin Quick Switch & Support Note */}
-      <div className="bg-amber-50/70 border border-amber-200/80 p-4 rounded-2xl flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 text-xs text-amber-900">
-          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-          <span>
-            Want to test balance injection or approve this user's withdrawal?
-          </span>
-        </div>
-        <button
-          onClick={() => setViewMode('backend')}
-          className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-3.5 py-1.5 rounded-xl transition shadow-sm whitespace-nowrap"
-        >
-          Open Backend Control
         </button>
       </div>
 

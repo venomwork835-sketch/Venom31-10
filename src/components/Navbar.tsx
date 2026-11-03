@@ -82,17 +82,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Send className="w-3 h-3 text-sky-300" />
               <span>Telegram Support</span>
             </button>
-
-            <button
-              onClick={() => setViewMode(viewMode === 'frontend' ? 'backend' : 'frontend')}
-              className="bg-slate-900/90 hover:bg-slate-900 text-white font-medium text-[11px] px-3 py-1 rounded-lg transition flex items-center gap-1.5 border border-white/20"
-            >
-              <ArrowRightLeft className="w-3 h-3 text-amber-400" />
-              {viewMode === 'frontend' ? 'Switch to Backend Admin' : 'Return to Storefront'}
-              {(pendingOrdersCount > 0 || pendingWithdrawalsCount > 0) && (
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-              )}
-            </button>
           </div>
         </div>
       </div>
@@ -237,8 +226,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition whitespace-nowrap"
           >
             <LogIn className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
-            <span className="text-[10px] text-amber-400 font-mono hidden md:inline">({currentUser.referralCode})</span>
+            <span>{currentUser.name.split(' ')[0]}</span>
           </button>
 
           {/* Cart Drawer */}

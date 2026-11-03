@@ -7,7 +7,6 @@ import {
   ShoppingBag,
   TrendingUp,
   PlusCircle,
-  ExternalLink,
   Trash2,
   Check,
   Crown,
@@ -18,7 +17,6 @@ export const MyProductsTab: React.FC = () => {
     userProducts,
     currentUser,
     setFrontendTab,
-    setViewMode,
     products,
     addProductToMerchantStore,
     removeProductFromMerchantStore,
@@ -88,13 +86,6 @@ export const MyProductsTab: React.FC = () => {
           >
             <PlusCircle className="w-4 h-4" />
             <span>Browse Master Catalog</span>
-          </button>
-          <button
-            onClick={() => setViewMode('backend')}
-            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-xl transition flex items-center gap-2"
-          >
-            <ExternalLink className="w-4 h-4 text-amber-400" />
-            <span>Merchant Control Desk</span>
           </button>
         </div>
       </div>
