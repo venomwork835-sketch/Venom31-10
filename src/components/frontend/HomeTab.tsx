@@ -42,13 +42,38 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     submitProductBankPayment,
     buyProductWithBalance,
     setViewMode,
+    setFrontendTab,
     setIsPlansModalOpen,
+    selectedProductForOrder,
+    setSelectedProductForOrder,
   } = useApp();
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [bankPurchaseProduct, setBankPurchaseProduct] = useState<Product | null>(null);
   const [addedNotice, setAddedNotice] = useState<string | null>(null);
   const [buyErrorNotice, setBuyErrorNotice] = useState<string | null>(null);
+
+  // URL Deep-linking and Direct Order Link handler
+  React.useEffect(() => {
+    if (selectedProductForOrder) {
+      setSelectedProduct(selectedProductForOrder);
+      setSelectedProductForOrder(null);
+      return;
+    }
+
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlProdId = searchParams.get('productId') || searchParams.get('order');
+      if (urlProdId) {
+        const target = products.find((p) => p.id === urlProdId);
+        if (target) {
+          setSelectedProduct(target);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [products, selectedProductForOrder, setSelectedProductForOrder]);
 
   // Bank Form State
   const [senderBankName, setSenderBankName] = useState('Standard Chartered Global');
@@ -128,16 +153,22 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
       {/* Toast Alert */}
       {addedNotice && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl border border-slate-700 flex items-center gap-2 animate-bounce">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{addedNotice}</span>
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-950 text-white text-xs px-4 py-3 rounded-2xl shadow-2xl border border-amber-500/50 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4">
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="font-semibold">{addedNotice}</span>
+          <button
+            onClick={() => setFrontendTab('my_products')}
+            className="ml-2 px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-lg text-[11px] whitespace-nowrap transition shadow"
+          >
+            My Products →
+          </button>
         </div>
       )}
 
       {buyErrorNotice && (
-        <div className="fixed bottom-6 right-6 z-50 bg-rose-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl border border-rose-700 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-300" />
-          <span>{buyErrorNotice}</span>
+        <div className="fixed bottom-6 right-6 z-50 bg-rose-950 text-white text-xs px-4 py-3 rounded-2xl shadow-2xl border border-rose-600 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span className="font-semibold">{buyErrorNotice}</span>
         </div>
       )}
 
@@ -682,17 +713,64 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                   </ul>
                 </div>
 
-                <div className="pt-4 flex flex-col sm:flex-row gap-2.5">
+                {/* Account Balance status before buying */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-slate-500 text-[11px] block">Your Available Account Balance:</span>
+                      <span className="font-extrabold text-slate-900 font-mono text-sm">
+                        ${currentUser.availableBalance.toFixed(2)}
+                      </span>
+                    </div>
+
+                    {currentUser.availableBalance >= selectedProduct.discountPrice ? (
+                      <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        Balance Sufficient
+                      </span>
+                    ) : (
+                      <span className="bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 text-rose-600" />
+                        Need ${(selectedProduct.discountPrice - currentUser.availableBalance).toFixed(2)} More
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between text-[11px] pt-1 border-t border-slate-200/70 text-slate-600">
+                    <span>Amount to be deducted:</span>
+                    <span className="font-mono font-bold text-rose-600">-${selectedProduct.discountPrice.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-slate-600">
+                    <span>Projected balance after buy:</span>
+                    <span className="font-mono font-bold text-emerald-600">
+                      ${Math.max(0, currentUser.availableBalance - selectedProduct.discountPrice).toFixed(2)}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-tight">
+                    Upon purchase, this item is listed in your <strong>My Products</strong> tab. When administration buys it back, your capital plus verified profit will be credited!
+                  </p>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
                   <button
                     onClick={() => {
                       const p = selectedProduct;
                       setSelectedProduct(null);
                       handleBuyNowWithBalance(p);
                     }}
-                    className="flex-1 py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl transition flex items-center justify-center gap-2 shadow"
+                    disabled={currentUser.availableBalance < selectedProduct.discountPrice}
+                    className={`flex-1 py-3 px-4 text-xs font-black rounded-xl transition flex items-center justify-center gap-2 shadow ${
+                      currentUser.availableBalance >= selectedProduct.discountPrice
+                        ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                        : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                    }`}
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span>Buy with Balance (-${selectedProduct.discountPrice.toFixed(2)})</span>
+                    <span>
+                      {currentUser.availableBalance >= selectedProduct.discountPrice
+                        ? `Buy with Balance (-$${selectedProduct.discountPrice.toFixed(2)})`
+                        : `Insufficient Balance (-$${selectedProduct.discountPrice.toFixed(2)})`}
+                    </span>
                   </button>
 
                   <button

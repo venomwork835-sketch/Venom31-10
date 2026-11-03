@@ -48,7 +48,7 @@ interface AppContextType {
   topSellers: TopSeller[];
   selectedProductForOrder: Product | null;
   setSelectedProductForOrder: (product: Product | null) => void;
-  adminAddProductToCatalog: (newProduct: Omit<Product, 'id'>) => void;
+  adminAddProductToCatalog: (newProduct: Omit<Product, 'id'>) => Product;
   buyProductWithBalance: (product: Product, quantity?: number) => { success: boolean; message: string };
 
   // Merchant Store Inventory (My Products Tab) & Buy Back
@@ -1211,12 +1211,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Admin adds a new product to store catalog
-  const adminAddProductToCatalog = (newProduct: Omit<Product, 'id'>) => {
+  const adminAddProductToCatalog = (newProduct: Omit<Product, 'id'>): Product => {
     const created: Product = {
       ...newProduct,
       id: `prod-cat-${Date.now()}`,
     };
     setProducts(prev => [created, ...prev]);
+    return created;
   };
 
   // Admin directly adds an order to any member's account
@@ -1843,6 +1844,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       userEmail: currentUser.email,
       planLevel: plan.level,
       planName: plan.name,
+      price: plan.price,
       planPrice: plan.price,
       productCount: plan.productCount,
       profitPercentage: plan.profitPercentage,

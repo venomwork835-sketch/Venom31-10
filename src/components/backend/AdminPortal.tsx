@@ -28,6 +28,8 @@ import {
   Bot,
   Filter,
   Crown,
+  Copy,
+  Link2,
 } from 'lucide-react';
 
 export const AdminPortal: React.FC = () => {
@@ -36,6 +38,8 @@ export const AdminPortal: React.FC = () => {
     currentUser,
     switchActiveUser,
     setViewMode,
+    setFrontendTab,
+    setSelectedProductForOrder,
     orders,
     adminBuyFulfillOrder,
     adminUpdateOrderStatus,
@@ -77,6 +81,7 @@ export const AdminPortal: React.FC = () => {
   const [editCanWithdraw, setEditCanWithdraw] = useState<boolean>(true);
   const [editPlanLevel, setEditPlanLevel] = useState<number>(1);
   const [editSuccessMsg, setEditSuccessMsg] = useState<string | null>(null);
+  const [customDeltaAmount, setCustomDeltaAmount] = useState<number>(100);
 
   // Tab 1: Filters & Search
   const [memberFilter, setMemberFilter] = useState<'all' | 'referred' | 'fake' | 'real'>('all');
@@ -128,6 +133,37 @@ export const AdminPortal: React.FC = () => {
   const [newCatalogSpecs, setNewCatalogSpecs] = useState('Flagship Processor, OLED Display, 5G');
   const [newCatalogDesc, setNewCatalogDesc] = useState('High performance device with 20% discount promotional rate.');
   const [catalogSuccessMsg, setCatalogSuccessMsg] = useState<string | null>(null);
+
+  // Direct client link sharing state
+  const [createdProductShare, setCreatedProductShare] = useState<Product | null>(null);
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
+  const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<ProductCategory>('all');
+  const [copiedLinkProdId, setCopiedLinkProdId] = useState<string | null>(null);
+
+  const getProductOrderLink = (prodId: string) => {
+    const origin = window.location.origin || '';
+    const pathname = window.location.pathname || '';
+    return `${origin}${pathname}?productId=${prodId}`;
+  };
+
+  const handleCopyProductLink = (prodId: string, title: string) => {
+    const link = getProductOrderLink(prodId);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(link);
+    }
+    setCopiedLinkProdId(prodId);
+    setCatalogSuccessMsg(`Copied direct client order link for "${title}"! Send this link to your client.`);
+    setTimeout(() => {
+      setCopiedLinkProdId(null);
+      setCatalogSuccessMsg(null);
+    }, 4000);
+  };
+
+  const handleTestClientOrder = (prod: Product) => {
+    setSelectedProductForOrder(prod);
+    setViewMode('frontend');
+    setFrontendTab('home');
+  };
 
   // Tab 4: Chat Desk
   const [selectedChatUserId, setSelectedChatUserId] = useState<string>(allUsers[0]?.id || currentUser.id);
@@ -250,7 +286,7 @@ export const AdminPortal: React.FC = () => {
     const original = Number(newCatalogOriginalPrice);
     const discount = Number((original * 0.8).toFixed(2));
 
-    adminAddProductToCatalog({
+    const created = adminAddProductToCatalog({
       title: newCatalogTitle.trim(),
       category: newCatalogCategory,
       originalPrice: original,
@@ -266,9 +302,10 @@ export const AdminPortal: React.FC = () => {
       commissionRate: 0.05,
     });
 
-    setCatalogSuccessMsg(`Product "${newCatalogTitle}" added to E-seller store catalog with 20% OFF!`);
+    setCreatedProductShare(created);
+    setCatalogSuccessMsg(`Product "${newCatalogTitle}" added to E-seller catalog! Direct client order link generated below.`);
     setNewCatalogTitle('');
-    setTimeout(() => setCatalogSuccessMsg(null), 3000);
+    setTimeout(() => setCatalogSuccessMsg(null), 4500);
   };
 
   // Send admin chat message
@@ -596,14 +633,58 @@ export const AdminPortal: React.FC = () => {
                             </span>
                           </td>
 
-                          {/* Available Balance */}
-                          <td className="py-3 px-3 font-mono font-bold text-white">
-                            ${user.availableBalance.toFixed(2)}
+                          {/* Available Balance with Quick +/- Controls */}
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                              <span className="font-mono font-bold text-white text-xs">
+                                ${user.availableBalance.toFixed(2)}
+                              </span>
+                              <div className="flex items-center gap-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => updateUserBalance(user.id, 100, 0, false)}
+                                  title="Quick Add +$100 to Member Available Balance"
+                                  className="w-5 h-5 rounded bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 font-black text-[11px] flex items-center justify-center transition border border-emerald-500/30"
+                                >
+                                  +
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => updateUserBalance(user.id, -100, 0, false)}
+                                  title="Quick Deduct -$100 from Member Available Balance"
+                                  className="w-5 h-5 rounded bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-black text-[11px] flex items-center justify-center transition border border-rose-500/30"
+                                >
+                                  -
+                                </button>
+                              </div>
+                            </div>
                           </td>
 
-                          {/* Freeze Balance */}
-                          <td className="py-3 px-3 font-mono text-indigo-300">
-                            ${user.freezeBalance.toFixed(2)}
+                          {/* Freeze Balance with Quick +/- Controls */}
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                              <span className="font-mono text-indigo-300 text-xs">
+                                ${user.freezeBalance.toFixed(2)}
+                              </span>
+                              <div className="flex items-center gap-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => updateUserBalance(user.id, 0, 50, false)}
+                                  title="Quick Freeze +$50"
+                                  className="w-5 h-5 rounded bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-slate-950 font-black text-[11px] flex items-center justify-center transition border border-indigo-500/30"
+                                >
+                                  +
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => updateUserBalance(user.id, 0, -50, false)}
+                                  title="Quick Unfreeze -$50"
+                                  className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-black text-[11px] flex items-center justify-center transition border border-slate-700"
+                                >
+                                  -
+                                </button>
+                              </div>
+                            </div>
                           </td>
 
                           {/* Credit Score */}
@@ -1768,108 +1849,413 @@ export const AdminPortal: React.FC = () => {
               </div>
             )}
 
-            {/* Sub-Section 3: ADD NEW PRODUCT TO STORE CATALOG */}
+            {/* Sub-Section 3: ADD NEW PRODUCT TO STORE CATALOG & GENERATE CLIENT LINKS */}
             {orderSubTab === 'add_catalog' && (
-              <div className="bg-slate-800/60 border border-slate-700/80 rounded-3xl p-6 shadow-xl space-y-5 max-w-3xl">
-                <div>
-                  <h2 className="text-base font-black text-white flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-amber-400" />
-                    Add New Product to Ebuy Store Catalog
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Added products will automatically show with a **20% OFF** discount badge in the front store catalog.
-                  </p>
-                </div>
-
-                {catalogSuccessMsg && (
-                  <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 p-3 rounded-xl text-xs font-bold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{catalogSuccessMsg}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleAddNewCatalogProduct} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-300">Product Title</label>
-                      <input
-                        type="text"
-                        value={newCatalogTitle}
-                        onChange={e => setNewCatalogTitle(e.target.value)}
-                        placeholder="e.g. Galaxy Z Fold 6 Ultra"
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-300">Category</label>
-                      <select
-                        value={newCatalogCategory}
-                        onChange={e => setNewCatalogCategory(e.target.value as ProductCategory)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
-                      >
-                        <option value="mobiles">Mobiles</option>
-                        <option value="laptops">Laptops</option>
-                        <option value="electronics">Electronics & Gaming</option>
-                        <option value="audio">Audio & Headphones</option>
-                        <option value="wearables">Smart Wearables</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-300">Original Price ($)</label>
-                      <input
-                        type="number"
-                        value={newCatalogOriginalPrice}
-                        onChange={e => setNewCatalogOriginalPrice(Number(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
-                        required
-                      />
-                      <p className="text-[10px] text-amber-400 font-semibold">
-                        20% discount price will be: ${(newCatalogOriginalPrice * 0.8).toFixed(2)}
+              <div className="space-y-6">
+                <div className="bg-slate-800/60 border border-slate-700/80 rounded-3xl p-6 shadow-xl space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-base font-black text-white flex items-center gap-2">
+                        <ShoppingBag className="w-5 h-5 text-amber-400" />
+                        Create Custom Product & Generate Client Order Link
+                      </h2>
+                      <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+                        Create products with custom pricing and profit margins. Each product generates a direct <strong>Client Order Link</strong>. When sent to your client, clicking the link opens the product directly on the client interface for instant 1-click balance purchase. Once in their <strong>My Products</strong> tab, you can execute Buy Back from the Buy Back desk!
                       </p>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-300">Image URL</label>
-                      <input
-                        type="url"
-                        value={newCatalogImage}
-                        onChange={e => setNewCatalogImage(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
-                      />
+                    <span className="text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 px-3 py-1 rounded-full self-start sm:self-auto">
+                      20% Wholesale Promotional Yield
+                    </span>
+                  </div>
+
+                  {/* Preset Templates Bar */}
+                  <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-700/80 space-y-2">
+                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Quick Preset Templates (Click to Auto-fill):
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        {
+                          title: 'iPhone 16 Pro Max 1TB Titan',
+                          category: 'mobiles' as ProductCategory,
+                          price: 1599,
+                          image: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=400&q=80',
+                          specs: '1TB NVMe, A18 Pro Bionic, Titanium Ceramic Shield, 5G Ultra',
+                          desc: 'Flagship Apple smartphone with titanium finish and 20% promotional wholesale discount.',
+                        },
+                        {
+                          title: 'MacBook Pro 16" M3 Max Studio',
+                          category: 'laptops' as ProductCategory,
+                          price: 3499,
+                          image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80',
+                          specs: '64GB Unified RAM, 2TB SSD, Liquid Retina XDR, Space Black',
+                          desc: 'High performance workstation laptop configured for enterprise wholesale distribution.',
+                        },
+                        {
+                          title: 'Rolex Submariner Date Ceramic',
+                          category: 'wearables' as ProductCategory,
+                          price: 14500,
+                          image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80',
+                          specs: 'Oystersteel, Cerachrom Bezel, Calibre 3235, 300m Waterproof',
+                          desc: 'Luxury chronometer timepiece with verified authenticity and priority buy-back yield.',
+                        },
+                        {
+                          title: 'Cinema Laser 4K Home Projector',
+                          category: 'electronics' as ProductCategory,
+                          price: 2199,
+                          image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80',
+                          specs: '3000 ANSI Lumens, Dolby Vision, Ultra Short Throw, HDR10+',
+                          desc: 'Premium home theater laser projector running on 20% promotional wholesale pricing.',
+                        },
+                        {
+                          title: 'Moncler Maya Down Winter Parka',
+                          category: 'apparel' as ProductCategory,
+                          price: 1850,
+                          image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80',
+                          specs: 'Glossy Lacquer Nylon, Dist Goose Down, Detachable Hood, Black',
+                          desc: 'Iconic luxury outerwear with winter high-turnover sales volume.',
+                        },
+                      ].map((preset) => (
+                        <button
+                          key={preset.title}
+                          type="button"
+                          onClick={() => {
+                            setNewCatalogTitle(preset.title);
+                            setNewCatalogCategory(preset.category);
+                            setNewCatalogOriginalPrice(preset.price);
+                            setNewCatalogImage(preset.image);
+                            setNewCatalogSpecs(preset.specs);
+                            setNewCatalogDesc(preset.desc);
+                          }}
+                          className="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 hover:border-amber-400 text-xs font-semibold transition flex items-center gap-1.5"
+                        >
+                          <span>{preset.title.split(' ')[0]} {preset.title.split(' ')[1]}</span>
+                          <span className="text-[10px] text-amber-400 font-mono font-bold">${preset.price}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-300">Specifications (comma separated)</label>
-                    <input
-                      type="text"
-                      value={newCatalogSpecs}
-                      onChange={e => setNewCatalogSpecs(e.target.value)}
-                      placeholder="e.g. 512GB Storage, 16GB RAM, Snapdragon 8 Gen 3"
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
-                    />
+                  {catalogSuccessMsg && (
+                    <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 p-3.5 rounded-2xl text-xs font-bold flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{catalogSuccessMsg}</span>
+                    </div>
+                  )}
+
+                  {/* Creation Form */}
+                  <form onSubmit={handleAddNewCatalogProduct} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-300">Product Title</label>
+                        <input
+                          type="text"
+                          value={newCatalogTitle}
+                          onChange={e => setNewCatalogTitle(e.target.value)}
+                          placeholder="e.g. Galaxy Z Fold 6 Ultra"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-300">Category</label>
+                        <select
+                          value={newCatalogCategory}
+                          onChange={e => setNewCatalogCategory(e.target.value as ProductCategory)}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
+                        >
+                          <option value="mobiles">Smartphones & Mobiles</option>
+                          <option value="laptops">Laptops & Workstations</option>
+                          <option value="electronics">Electronics & Tech</option>
+                          <option value="audio">Audio & Headphones</option>
+                          <option value="wearables">Smart Wearables & Watches</option>
+                          <option value="apparel">Winter Apparel & Jackets</option>
+                          <option value="footwear">Footwear & Shoes</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-300">Original Wholesale Price ($)</label>
+                        <input
+                          type="number"
+                          value={newCatalogOriginalPrice}
+                          onChange={e => setNewCatalogOriginalPrice(Number(e.target.value))}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400 font-mono font-bold"
+                          required
+                        />
+                        <div className="flex items-center justify-between text-[10px] text-amber-400 font-semibold pt-0.5">
+                          <span>20% Discount Front Price: <strong>${(newCatalogOriginalPrice * 0.8).toFixed(2)}</strong></span>
+                          <span>Guaranteed Yield: <strong>20%</strong></span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-300">Product Image URL</label>
+                        <input
+                          type="url"
+                          value={newCatalogImage}
+                          onChange={e => setNewCatalogImage(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400 font-mono"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300">Specifications (comma separated)</label>
+                      <input
+                        type="text"
+                        value={newCatalogSpecs}
+                        onChange={e => setNewCatalogSpecs(e.target.value)}
+                        placeholder="e.g. 512GB Storage, 16GB RAM, Snapdragon 8 Gen 3"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300">Description</label>
+                      <textarea
+                        rows={2}
+                        value={newCatalogDesc}
+                        onChange={e => setNewCatalogDesc(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 px-6 rounded-xl text-xs uppercase tracking-wider transition shadow-lg flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Save & Create Product (Generate Direct Link)</span>
+                    </button>
+                  </form>
+                </div>
+
+                {/* Just Created Product Direct Link Banner */}
+                {createdProductShare && (
+                  <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border border-emerald-500/50 rounded-3xl p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-emerald-500/30">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={createdProductShare.imageUrl}
+                          alt=""
+                          className="w-12 h-12 rounded-xl bg-white p-1 object-contain shrink-0"
+                        />
+                        <div>
+                          <div className="text-[10px] font-black uppercase text-emerald-400">
+                            ★ Direct Client Order Link Ready
+                          </div>
+                          <h3 className="text-base font-extrabold text-white">
+                            {createdProductShare.title}
+                          </h3>
+                          <div className="text-xs text-slate-300 font-mono">
+                            Client Price: <strong className="text-amber-400 font-bold">${createdProductShare.discountPrice.toFixed(2)}</strong> (Original: ${createdProductShare.originalPrice.toFixed(2)})
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleTestClientOrder(createdProductShare)}
+                          className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open in Client View</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAssignSelectedProductId(createdProductShare.id);
+                            setOrderSubTab('assign');
+                          }}
+                          className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold rounded-xl text-xs transition flex items-center gap-1.5"
+                        >
+                          <PlusCircle className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Assign to Member</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <Link2 className="w-3.5 h-3.5 text-emerald-400" />
+                        Client Direct Order Link (Copy & Send to Client):
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={getProductOrderLink(createdProductShare.id)}
+                          className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-emerald-300 select-all outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleCopyProductLink(createdProductShare.id, createdProductShare.title)}
+                          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shrink-0 shadow"
+                        >
+                          {copiedLinkProdId === createdProductShare.id ? (
+                            <>
+                              <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4 h-4" />
+                              <span>Copy Link</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        When the client opens this link, the app will open directly to this product with 1-click account balance purchase!
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Directory of Catalog Products with Direct Order Links */}
+                <div className="bg-slate-800/60 border border-slate-700/80 rounded-3xl p-6 shadow-xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-black text-white flex items-center gap-2">
+                        <Package className="w-4 h-4 text-amber-400" />
+                        Store Catalog Directory & Client Direct Links ({products.length} Products)
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Copy any product's direct order link to share with your clients or test immediate purchase.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={catalogSearchQuery}
+                          onChange={e => setCatalogSearchQuery(e.target.value)}
+                          placeholder="Search product..."
+                          className="bg-slate-900 border border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-400 outline-none focus:border-amber-400 w-48 sm:w-56"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-300">Description</label>
-                    <textarea
-                      rows={2}
-                      value={newCatalogDesc}
-                      onChange={e => setNewCatalogDesc(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400"
-                    />
-                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-300">
+                      <thead className="bg-slate-900/80 text-[11px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-700">
+                        <tr>
+                          <th className="py-3 px-4">Product</th>
+                          <th className="py-3 px-3">Category</th>
+                          <th className="py-3 px-3">Client Price</th>
+                          <th className="py-3 px-3">Original Price</th>
+                          <th className="py-3 px-3">Profit Yield</th>
+                          <th className="py-3 px-4 text-right">Client Share Link & Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-700/60 font-medium">
+                        {(() => {
+                          const filtered = products.filter(p => {
+                            const query = catalogSearchQuery.toLowerCase();
+                            const matchesSearch =
+                              !query ||
+                              p.title.toLowerCase().includes(query) ||
+                              p.category.toLowerCase().includes(query);
+                            return matchesSearch;
+                          });
 
-                  <button
-                    type="submit"
-                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider transition shadow"
-                  >
-                    Save & Add to Catalog
-                  </button>
-                </form>
+                          if (filtered.length === 0) {
+                            return (
+                              <tr>
+                                <td colSpan={6} className="py-8 text-center text-slate-500">
+                                  No catalog products matched your search.
+                                </td>
+                              </tr>
+                            );
+                          }
+
+                          return filtered.map(prod => (
+                            <tr key={prod.id} className="hover:bg-slate-800/40 transition">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-2.5 max-w-[240px]">
+                                  <img
+                                    src={prod.imageUrl}
+                                    alt=""
+                                    className="w-9 h-9 rounded-lg bg-white p-0.5 object-contain shrink-0"
+                                  />
+                                  <div className="truncate">
+                                    <div className="font-bold text-white truncate">{prod.title}</div>
+                                    <div className="text-[10px] text-slate-400 font-mono">ID: {prod.id}</div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-3">
+                                <span className="uppercase text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded font-bold border border-slate-700">
+                                  {prod.category}
+                                </span>
+                              </td>
+
+                              <td className="py-3 px-3 font-mono font-bold text-amber-400 text-sm">
+                                ${prod.discountPrice.toFixed(2)}
+                              </td>
+
+                              <td className="py-3 px-3 font-mono text-slate-400 line-through">
+                                ${prod.originalPrice.toFixed(2)}
+                              </td>
+
+                              <td className="py-3 px-3">
+                                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                  20% Yield
+                                </span>
+                              </td>
+
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyProductLink(prod.id, prod.title)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm ${
+                                      copiedLinkProdId === prod.id
+                                        ? 'bg-emerald-600 text-white font-black'
+                                        : 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-black'
+                                    }`}
+                                  >
+                                    {copiedLinkProdId === prod.id ? (
+                                      <>
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        <span>Link Copied</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="w-3.5 h-3.5" />
+                                        <span>Copy Client Link</span>
+                                      </>
+                                    )}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleTestClientOrder(prod)}
+                                    className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold transition flex items-center gap-1"
+                                    title="Open and test product in client store view"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                                    <span>Client View</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -2122,45 +2508,182 @@ export const AdminPortal: React.FC = () => {
             )}
 
             <form onSubmit={handleSaveUserFinancials} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                  <span>Available Balance ($)</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">Current: ${editingUser.availableBalance.toFixed(2)}</span>
-                </label>
+              {/* Available Balance (+ / - Controls) */}
+              <div className="space-y-2 p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Available Balance ($)</span>
+                  </label>
+                  <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                    Current: ${editingUser.availableBalance.toFixed(2)}
+                  </span>
+                </div>
+
                 <div className="relative">
                   <DollarSign className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="number"
                     step="0.01"
                     value={editAvailable}
-                    onChange={e => setEditAvailable(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-mono font-bold text-white outline-none focus:border-amber-400"
+                    onChange={e => setEditAvailable(Math.max(0, parseFloat(e.target.value) || 0))}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-mono font-bold text-white outline-none focus:border-amber-400"
                   />
+                </div>
+
+                {/* Quick + / - Delta Buttons */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-[10px] text-slate-400 font-bold flex items-center justify-between">
+                    <span>Quick Add (+)</span>
+                    <span className="text-emerald-400 font-mono">Increase Balance</span>
+                  </div>
+                  <div className="grid grid-cols-6 gap-1">
+                    {[50, 100, 200, 500, 1000, 5000].map(amt => (
+                      <button
+                        key={`add-${amt}`}
+                        type="button"
+                        onClick={() => setEditAvailable(prev => Number((prev + amt).toFixed(2)))}
+                        className="py-1 px-1 bg-emerald-500/10 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-[10px] font-mono font-bold transition text-center"
+                      >
+                        +${amt >= 1000 ? `${amt / 1000}k` : amt}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="text-[10px] text-slate-400 font-bold flex items-center justify-between pt-1">
+                    <span>Quick Subtract (-)</span>
+                    <span className="text-rose-400 font-mono">Deduct Balance</span>
+                  </div>
+                  <div className="grid grid-cols-6 gap-1">
+                    {[50, 100, 200, 500, 1000].map(amt => (
+                      <button
+                        key={`sub-${amt}`}
+                        type="button"
+                        onClick={() => setEditAvailable(prev => Math.max(0, Number((prev - amt).toFixed(2))))}
+                        className="py-1 px-1 bg-rose-500/10 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 rounded-lg text-[10px] font-mono font-bold transition text-center"
+                      >
+                        -${amt >= 1000 ? `${amt / 1000}k` : amt}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setEditAvailable(0)}
+                      className="py-1 px-1 bg-slate-900 hover:bg-slate-700 text-slate-400 border border-slate-700 rounded-lg text-[10px] font-mono font-bold transition text-center"
+                      title="Reset Available Balance to $0"
+                    >
+                      $0
+                    </button>
+                  </div>
+                </div>
+
+                {/* Custom Delta Row */}
+                <div className="pt-2 border-t border-slate-700/60 flex items-center gap-2">
+                  <div className="text-[10px] text-slate-400 font-bold whitespace-nowrap">Custom +/-:</div>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    value={customDeltaAmount}
+                    onChange={e => setCustomDeltaAmount(Math.max(1, parseFloat(e.target.value) || 0))}
+                    className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono font-bold text-white text-center outline-none focus:border-amber-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditAvailable(prev => Number((prev + customDeltaAmount).toFixed(2)))}
+                    className="flex-1 py-1 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition shadow"
+                  >
+                    + Add ${customDeltaAmount}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditAvailable(prev => Math.max(0, Number((prev - customDeltaAmount).toFixed(2))))}
+                    className="flex-1 py-1 px-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] transition shadow"
+                  >
+                    - Deduct ${customDeltaAmount}
+                  </button>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                  <span>Freeze Balance ($)</span>
-                  <span className="text-[10px] text-indigo-400 font-mono">Current: ${editingUser.freezeBalance.toFixed(2)}</span>
-                </label>
+              {/* Freeze Balance (+ / - Controls) */}
+              <div className="space-y-2 p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Freeze Balance ($)</span>
+                  </label>
+                  <span className="text-[10px] text-indigo-400 font-mono font-bold">
+                    Current: ${editingUser.freezeBalance.toFixed(2)}
+                  </span>
+                </div>
+
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="number"
                     step="0.01"
                     value={editFreeze}
-                    onChange={e => setEditFreeze(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-mono font-bold text-white outline-none focus:border-amber-400"
+                    onChange={e => setEditFreeze(Math.max(0, parseFloat(e.target.value) || 0))}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-mono font-bold text-white outline-none focus:border-amber-400"
                   />
+                </div>
+
+                <div className="flex items-center justify-between gap-1 pt-1">
+                  <div className="flex items-center gap-1">
+                    {[50, 100, 500].map(amt => (
+                      <button
+                        key={`frz-add-${amt}`}
+                        type="button"
+                        onClick={() => setEditFreeze(prev => Number((prev + amt).toFixed(2)))}
+                        className="py-1 px-1.5 bg-indigo-500/10 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 rounded-lg text-[10px] font-mono font-bold transition"
+                      >
+                        +${amt}
+                      </button>
+                    ))}
+                    {[50, 100, 500].map(amt => (
+                      <button
+                        key={`frz-sub-${amt}`}
+                        type="button"
+                        onClick={() => setEditFreeze(prev => Math.max(0, Number((prev - amt).toFixed(2))))}
+                        className="py-1 px-1.5 bg-slate-900 hover:bg-slate-700 text-slate-400 border border-slate-700 rounded-lg text-[10px] font-mono font-bold transition"
+                      >
+                        -${amt}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editFreeze > 0) {
+                        setEditAvailable(a => Number((a + editFreeze).toFixed(2)));
+                        setEditFreeze(0);
+                      }
+                    }}
+                    disabled={editFreeze <= 0}
+                    className="py-1 px-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-bold text-[10px] transition whitespace-nowrap shadow flex items-center gap-1"
+                    title="Transfer all frozen funds directly to available balance"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                    <span>Release All to Available</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="space-y-2">
+              {/* Credit Score (0% - 100%) */}
+              <div className="space-y-2 p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-300">Credit Score (0% - 100%)</label>
-                  <span className="font-mono text-xs font-black text-amber-400">{editCreditScore}%</span>
+                  <span className={`font-mono text-xs font-black px-2 py-0.5 rounded ${
+                    editCreditScore >= 90
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : editCreditScore >= 75
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  }`}>
+                    {editCreditScore}%
+                  </span>
                 </div>
+
                 <input
                   type="range"
                   min="0"
@@ -2169,6 +2692,42 @@ export const AdminPortal: React.FC = () => {
                   onChange={e => setEditCreditScore(parseInt(e.target.value))}
                   className="w-full accent-amber-500 cursor-pointer"
                 />
+
+                <div className="flex items-center justify-between gap-1 pt-1">
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditCreditScore(s => Math.min(100, s + 5))}
+                      className="px-2 py-1 bg-slate-900 hover:bg-slate-700 text-emerald-400 font-bold text-[10px] rounded-lg border border-slate-700 transition"
+                    >
+                      +5%
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditCreditScore(s => Math.max(0, s - 5))}
+                      className="px-2 py-1 bg-slate-900 hover:bg-slate-700 text-rose-400 font-bold text-[10px] rounded-lg border border-slate-700 transition"
+                    >
+                      -5%
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    {[100, 90, 75, 50, 0].map(score => (
+                      <button
+                        key={`preset-${score}`}
+                        type="button"
+                        onClick={() => setEditCreditScore(score)}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${
+                          editCreditScore === score
+                            ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
+                            : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white'
+                        }`}
+                      >
+                        {score}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Member Withdrawal Lock Control */}
@@ -2214,7 +2773,25 @@ export const AdminPortal: React.FC = () => {
               <div className="space-y-1.5 p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700">
                 <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
                   <span>Store Plan Level (Plan 1 - Plan 8)</span>
-                  <span className="text-[10px] text-amber-400 font-mono font-bold">Plan {editPlanLevel}</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={editPlanLevel <= 1}
+                      onClick={() => setEditPlanLevel(lvl => Math.max(1, lvl - 1))}
+                      className="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-700 disabled:opacity-30 text-[10px] font-bold text-slate-300 border border-slate-700"
+                    >
+                      Plan -1
+                    </button>
+                    <button
+                      type="button"
+                      disabled={editPlanLevel >= 8}
+                      onClick={() => setEditPlanLevel(lvl => Math.min(8, lvl + 1))}
+                      className="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-700 disabled:opacity-30 text-[10px] font-bold text-amber-300 border border-slate-700"
+                    >
+                      Plan +1
+                    </button>
+                    <span className="text-[10px] text-amber-400 font-mono font-bold ml-1">Plan {editPlanLevel}</span>
+                  </div>
                 </label>
                 <select
                   value={editPlanLevel}
@@ -2228,7 +2805,7 @@ export const AdminPortal: React.FC = () => {
                   ))}
                 </select>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Changing plan auto-populates {sellerPlans.find(p => p.level === editPlanLevel)?.productCount || 4} products into this member's My Products tab.
+                  Saving will auto-populate {sellerPlans.find(p => p.level === editPlanLevel)?.productCount || 4} products into this member's My Products tab.
                 </p>
               </div>
 

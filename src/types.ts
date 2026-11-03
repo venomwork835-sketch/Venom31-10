@@ -316,6 +316,7 @@ export interface PlanPurchaseRequest {
   planLevel: number;
   planName: string;
   price: number;
+  planPrice: number;
   productCount: number;
   profitPercentage: number;
   requestedAt: string;
